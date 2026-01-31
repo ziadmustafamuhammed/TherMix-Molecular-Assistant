@@ -47,7 +47,7 @@
             }
         }
 
-        const apiKey = ""; // Runtime provides key
+        const apiKey = "AIzaSyB2hzxjh8qxsmSHzb_3kTGSnRUcIFhV_pE"; // Runtime provides key
 
         let state = {
             currentPage: 'dashboard',
@@ -94,7 +94,7 @@
         // 4. فحص الرد: لو السيرفر زعلان أو فيه ضغط
         if (!response.ok) {
             if (response.status === 429) throw new Error("Too many requests! Wait 1 minute.");
-            throw new Error("AI Connection Issue (Check API Key)");
+            throw new Error("AI Connection Issue (Check  Key)");
         }
 
         // 5. لو كله تمام، بنحول الرد لنص نقدر نفهمه
@@ -396,6 +396,7 @@ async function handleFileUpload(event) {
 </body>
 
 </html>
+
 
 
 
