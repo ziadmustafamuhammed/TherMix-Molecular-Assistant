@@ -47,13 +47,8 @@
             }
         }
 
-         const apiKey = ""; // Runtime provides key
-        let state = {
-            currentPage: 'dashboard',
-            isAILoading: false,
-            protocols: [
-
-                {
+         // التعديل ده بيخلي الموقع يدور على المفتاح في "الخلفية" بتاعة Vercel
+const apiKey = window.process?.env?.GEMINI_API_KEY || "";
                     id: 'p1',
                     title: 'SARS-CoV-2 Detection (N1)',
                     description: 'Standard CDC-approved diagnostic protocol.',
@@ -396,6 +391,7 @@ async function handleFileUpload(event) {
 </body>
 
 </html>
+
 
 
 
