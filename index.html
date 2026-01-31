@@ -299,8 +299,7 @@ const apiKey = window.process?.env?.GEMINI_API_KEY || "";
                     <div class="flex-grow border-t border-gray-100"></div>
                 </div>
 
-                <textarea id="import-text" class="w-full h-40 bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm focus:ring-navy focus:border-navy mb-4 resize-none" placeholder="Paste protocol steps here..."></textarea>
-                
+<textarea id="importText" placeholder="Paste your protocol text here..."></textarea>                
                 <button onclick="runSmartImport()" id="ai-btn" class="w-full bg-navy text-white py-4 rounded-2xl font-black shadow-lg active:scale-95 transition-all flex justify-center items-center">
                     ${state.isAILoading ? '<span class="animate-spin mr-2">⏳</span> Processing...' : 'Start AI Import ✨'}
                 </button>
@@ -344,17 +343,18 @@ async function handleFileUpload(event) {
     };
     reader.readAsArrayBuffer(file);
 }
-        async function runSmartImport() {
-    const text = document.getElementById('importText').value;
+       async function runSmartImport() {
+    const textArea = document.getElementById('importText');
+    
+    // لو العنصر مش موجود في الصفحة، هيطلع تحذير بدل ما الكود ينهار
+    if (!textArea) {
+        console.error("Error: Element #importText not found in the DOM.");
+        return;
+    }
+    
+    const text = textArea.value;
     if (!text) return alert("Please provide some text or a file.");
-
-    state.isAILoading = true;
-    renderApp();
-
-    const prompt = `Extract chemical protocols from this text. 
-    Return ONLY a JSON array of objects with these keys: 
-    "name", "description", "ingredients" (as array of strings), "steps" (as array of strings).
-    Text: ${text}`;
+    
 
     const importedProtocols = await callGemini(prompt, true);
 
@@ -391,6 +391,7 @@ async function handleFileUpload(event) {
 </body>
 
 </html>
+
 
 
 
