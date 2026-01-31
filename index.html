@@ -80,28 +80,37 @@ const apiKey = window.process?.env?.GEMINI_API_KEY || "";
         };
 
         async function callGemini(prompt, isJson = false) {
-    const payload = { contents: [{ parts: [{ text: prompt }] }] };
-    if (isJson) payload.generationConfig = { responseMimeType: "application/json" };
+    // التنسيق ده هو اللي جوجل مستنياه
+    const payload = { 
+        contents: [{ 
+            parts: [{ text: prompt }] 
+        }] 
+    };
+    
+    // لو محتاجين الرد بصيغة JSON بنضيف الإعداد ده
+    if (isJson) {
+        payload.generationConfig = { responseMimeType: "application/json" };
+    }
     
     try {
-        // بدلاً من مناداة جوجل مباشرة، ننادي الـ API الخاص بنا في Vercel
         const response = await fetch('/api/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify(payload) // بنبعت الـ payload اللي فوق
         });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Server Error");
-        }
-
         const result = await response.json();
-        const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-        return isJson ? JSON.parse(text) : text;
+        
+        // تأكد من طريقة قراءة الرد من جوجل
+        if (result.candidates && result.candidates[0].content) {
+            const text = result.candidates[0].content.parts[0].text;
+            return isJson ? JSON.parse(text) : text;
+        } else {
+            console.error("Unexpected API Response:", result);
+            throw new Error("AI could not understand the request");
+        }
     } catch (error) {
         console.error("AI Error:", error);
-        alert("⚠️ AI Notification: " + error.message);
         return null;
     }
 }
@@ -391,6 +400,7 @@ async function handleFileUpload(event) {
 </body>
 
 </html>
+
 
 
 
