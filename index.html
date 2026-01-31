@@ -176,10 +176,10 @@
                             <tbody class="divide-y divide-gray-50">
                                 ${p.reagents.map((r, i) => `
                                     <tr>
-                                        <td class="py-3 px-2"><input type="text" value="${r.name}" class="w-full border-none p-0 focus:ring-0 font-medium" onchange="state.editingProtocol.reagents[${i}].name = this.value"></td>
+                                        <td class="py-3 px-2"><input type="text" value="${r.name}" class="w-full border-none p-0 focus:ring-0 font-small" onchange="state.editingProtocol.reagents[${i}].name = this.value"></td>
                                         <td class="py-3 w-32"><input type="number" step="0.1" value="${r.perSample}" class="w-full border-none p-0 focus:ring-0 text-gray-500" onchange="state.editingProtocol.reagents[${i}].perSample = parseFloat(this.value); render();"></td>
-                                        <td class="py-3 text-right font-bold text-navy pr-12">${(r.perSample * p.numSamples).toFixed(2)} µL</td>
-                                        <td class="py-3 text-right"><button onclick="state.editingProtocol.reagents.splice(${i},1); render();" class="text-red-300 hover:text-red-500">✕</button></td>
+                                        <td class="py-3 text-right font-bold text-navy pr-10">${(r.perSample * p.numSamples).toFixed(2)} µL</td>
+                                        <td class="py-3 text-center"><button onclick="state.editingProtocol.reagents.splice(${i},1); render();" class="text-red-300 hover:text-red-500">✕</button></td>
                                     </tr>
                                 `).join('')}
                                 <tr class="bg-navy text-white"><td class="py-3 px-3 rounded-l-xl font-bold">Total Mix</td><td class="py-4 font-bold">${mMixTotal.toFixed(2)} µL</td><td class="py-4 text-right text-sm font-black pr-4 rounded-r-xl">${(mMixTotal * p.numSamples).toFixed(2)} µL</td><td></td></tr>
@@ -219,6 +219,7 @@
 </body>
 
 </html>
+
 
 
 
