@@ -47,17 +47,13 @@
             }
         }
 
-        // الكود سيسألك عن المفتاح مرة واحدة فقط ويحفظه في متصفحك
-const apiKey = localStorage.getItem('MY_SCIENTIFIC_KEY') || "";
+         const apiKey = ""; // Runtime provides key
+        let state = {
+            currentPage: 'dashboard',
+            isAILoading: false,
+            protocols: [
 
-// إذا كان المفتاح غير موجود، سنطلب من المستخدم إدخاله
-if (apiKey === "" && state.currentPage === 'import') {
-    const userKey = prompt("Please enter your Gemini API Key to enable Smart Import:");
-    if (userKey) {
-        localStorage.setItem('MY_SCIENTIFIC_KEY', userKey);
-        location.reload();
-    }
-}
+                {
                     id: 'p1',
                     title: 'SARS-CoV-2 Detection (N1)',
                     description: 'Standard CDC-approved diagnostic protocol.',
@@ -400,6 +396,7 @@ async function handleFileUpload(event) {
 </body>
 
 </html>
+
 
 
 
