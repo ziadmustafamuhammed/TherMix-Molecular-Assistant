@@ -182,7 +182,7 @@
                                         <td class="py-3 text-right"><button onclick="state.editingProtocol.reagents.splice(${i},1); render();" class="text-red-300 hover:text-red-500">✕</button></td>
                                     </tr>
                                 `).join('')}
-                                <tr class="bg-navy text-white"><td class="py-3 px-3 rounded-l-xl font-bold">Total Mix</td><td class="py-4 font-bold">${mMixTotal.toFixed(2)} µL</td><td class="py-4 text-right text-xl font-black pr-4 rounded-r-xl">${(mMixTotal * p.numSamples).toFixed(2)} µL</td><td></td></tr>
+                                <tr class="bg-navy text-white"><td class="py-3 px-3 rounded-l-xl font-bold">Total Mix</td><td class="py-4 font-bold">${mMixTotal.toFixed(2)} µL</td><td class="py-4 text-right text-sm font-black pr-4 rounded-r-xl">${(mMixTotal * p.numSamples).toFixed(2)} µL</td><td></td></tr>
                             </tbody>
                         </table>
                         <button onclick="state.editingProtocol.reagents.push({name: 'New', perSample: 0}); render();" class="mt-4 w-full border-2 border-dashed border-gray-200 py-3 rounded-xl text-gray-400 font-bold hover:border-navy hover:text-navy transition">+ Add Reagent</button>
@@ -219,6 +219,7 @@
 </body>
 
 </html>
+
 
 
 
