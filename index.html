@@ -157,76 +157,83 @@
         function renderEditor() {
     const p = state.editingProtocol;
     const mMixTotal = p.reagents.reduce((s, r) => s + (r.perSample || 0), 0);
-    
+
     document.getElementById('main-content').innerHTML = `
-        <div class="max-w-4xl mx-auto space-y-6 pb-24">
-            <div class="glass-card rounded-2xl p-6 shadow-sm">
-                <input type="text" value="${p.title}" class="text-2xl md:text-3xl font-black text-navy w-full border-none focus:ring-0 mb-1 p-0 bg-transparent" onchange="state.editingProtocol.title = this.value">
+        <div class="max-w-4xl mx-auto space-y-6 pb-20">
+            <div class="glass-card rounded-2xl p-6 border-none shadow-sm">
+                <input type="text" value="${p.title}" class="text-2xl font-black text-navy w-full border-none focus:ring-0 mb-1 p-0 bg-transparent" onchange="state.editingProtocol.title = this.value">
                 <textarea class="text-gray-500 w-full border-none focus:ring-0 p-0 text-sm italic bg-transparent resize-none" onchange="state.editingProtocol.description = this.value">${p.description}</textarea>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-4 md:p-8">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-                    <h3 class="text-lg font-black text-navy uppercase tracking-wider">Master Mix Calculator</h3>
-                    <div class="flex items-center justify-between w-full md:w-auto gap-4 bg-blue-50 px-4 py-3 rounded-xl border border-blue-100">
-                        <label class="text-xs font-bold text-scientific">SAMPLES (N)</label>
-                        <input type="number" value="${p.numSamples}" onchange="state.editingProtocol.numSamples = parseInt(this.value); render();" 
-                               class="w-16 bg-transparent border-none text-navy font-black text-xl p-0 text-right focus:ring-0">
-                    </div>
-                </div>
+            <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-[#E9EEF5] text-navy border-b border-gray-200">
+                            <th class="py-4 px-4 font-bold text-sm">Reagent</th>
+                            <th class="py-4 px-2 text-center font-bold text-sm">Volume (1x) µL</th>
+                            <th class="py-4 px-2 text-center font-bold text-sm bg-[#D1DCEB]">Total Volume (${p.numSamples}x) µL</th>
+                            <th class="py-4 px-2"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        <tr class="bg-[#FFFEE5]">
+                            <td class="py-4 px-4 font-bold text-navy">DNA Sample</td>
+                            <td class="py-4 px-2 text-center">
+                                <input type="number" step="0.1" value="${p.sampleVolume}" onchange="state.editingProtocol.sampleVolume = parseFloat(this.value); render();" 
+                                class="w-16 bg-transparent border-none text-center font-bold focus:ring-0 p-0">
+                            </td>
+                            <td class="py-4 px-2 text-center text-gray-500 font-medium bg-[#FFFEE5]">
+                                ${(p.sampleVolume * p.numSamples).toFixed(2)}
+                            </td>
+                            <td class="py-4 px-2 text-center text-gray-300">—</td>
+                        </tr>
 
-                <div class="hidden md:block overflow-hidden">
-                    <table class="w-full text-left">
-                        <thead>
-                            <tr class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest border-b border-gray-100">
-                                <th class="py-3 px-2">Component</th>
-                                <th class="py-3">Per Sample</th>
-                                <th class="py-3 text-right pr-12">Total</th>
-                                <th></th>
+                        ${p.reagents.map((r, i) => `
+                            <tr>
+                                <td class="py-4 px-4">
+                                    <input type="text" value="${r.name}" class="w-full bg-transparent border-none p-0 focus:ring-0 font-medium text-gray-700" onchange="updateReagent(${i}, 'name', this.value)">
+                                </td>
+                                <td class="py-4 px-2 text-center">
+                                    <input type="number" step="0.1" value="${r.perSample}" class="w-16 bg-transparent border-none text-center font-bold focus:ring-0 p-0" onchange="updateReagent(${i}, 'perSample', this.value)">
+                                </td>
+                                <td class="py-4 px-2 text-center font-black text-navy bg-[#F8FAFC]">
+                                    ${(r.perSample * p.numSamples).toFixed(2)}
+                                </td>
+                                <td class="py-4 px-2 text-center">
+                                    <button onclick="state.editingProtocol.reagents.splice(${i},1); render();" class="text-red-500 hover:text-red-700 font-bold text-lg">✕</button>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-50">
-                            ${p.reagents.map((r, i) => `
-                                <tr>
-                                    <td class="py-4 px-2 font-semibold">${r.name}</td>
-                                    <td class="py-4 text-gray-500">${r.perSample} µL</td>
-                                    <td class="py-4 text-right font-bold text-navy pr-12">${(r.perSample * p.numSamples).toFixed(2)} µL</td>
-                                    <td class="py-4 text-right"><button onclick="state.editingProtocol.reagents.splice(${i},1); render();" class="text-red-300 hover:text-red-500 text-lg">✕</button></td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
+                        `).join('')}
 
-                <div class="md:hidden space-y-3">
-                    ${p.reagents.map((r, i) => `
-                        <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 relative">
-                            <button onclick="state.editingProtocol.reagents.splice(${i},1); render();" class="absolute top-2 right-2 text-red-300 p-2">✕</button>
-                            <div class="text-xs font-bold text-gray-400 uppercase mb-1">Component</div>
-                            <input type="text" value="${r.name}" class="w-full bg-transparent font-bold text-navy border-none p-0 mb-3 focus:ring-0" onchange="state.editingProtocol.reagents[${i}].name = this.value">
-                            <div class="flex justify-between items-end">
-                                <div>
-                                    <div class="text-[10px] font-bold text-gray-400 uppercase italic">Per Sample</div>
-                                    <input type="number" step="0.1" value="${r.perSample}" class="w-20 bg-transparent border-b border-gray-200 font-medium p-0 focus:ring-0" onchange="state.editingProtocol.reagents[${i}].perSample = parseFloat(this.value); render();"> <span class="text-xs text-gray-400">µL</span>
-                                </div>
-                                <div class="text-right">
-                                    <div class="text-[10px] font-bold text-gray-400 uppercase italic">Total Volume</div>
-                                    <div class="text-lg font-black text-scientific">${(r.perSample * p.numSamples).toFixed(2)} µL</div>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
+                        <tr class="bg-[#D1DCEB] border-t-2 border-[#30486D]">
+                            <td class="py-4 px-4 font-bold text-navy leading-tight text-sm">
+                                Master<br>Mix Total<br>(MM)
+                            </td>
+                            <td class="py-4 px-2 text-center font-black text-navy text-lg">
+                                ${mMixTotal.toFixed(2)} µL
+                            </td>
+                            <td class="py-4 px-2 text-center font-black text-navy text-lg bg-[#BCCCDC]">
+                                ${(mMixTotal * p.numSamples).toFixed(2)} µL
+                            </td>
+                            <td class="py-4 px-2"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-                <div class="mt-6 bg-navy text-white p-5 rounded-2xl flex justify-between items-center shadow-lg">
-                    <span class="font-bold uppercase tracking-tight text-sm">Total Master Mix</span>
-                    <span class="text-2xl font-black">${(mMixTotal * p.numSamples).toFixed(2)} <small class="text-xs font-normal">µL</small></span>
+            <div class="bg-[#F8FAFC] border border-gray-200 rounded-xl p-6 flex flex-col gap-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-navy font-bold text-lg leading-tight">Total Master Mix (MM) Volume<br>per Reaction (1x):</span>
+                    <span class="text-2xl font-black text-navy">${mMixTotal.toFixed(2)} µL</span>
                 </div>
                 
-                <button onclick="state.editingProtocol.reagents.push({name: 'New Reagent', perSample: 0}); render();" 
-                        class="mt-4 w-full border-2 border-dashed border-gray-200 py-4 rounded-xl text-gray-400 font-bold hover:border-navy hover:text-navy transition active:scale-95">
-                    + Add Reagent
-                </button>
+                <div class="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
+                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Number of Samples (N)</span>
+                    <input type="number" value="${p.numSamples}" onchange="state.editingProtocol.numSamples = parseInt(this.value); render();" 
+                    class="w-16 bg-blue-50 rounded-md border-none text-center font-black text-navy py-1 focus:ring-2 focus:ring-navy">
+                </div>
+
+                <button onclick="addReagent()" class="w-full border-2 border-dashed border-gray-200 py-3 rounded-xl text-gray-400 font-bold hover:border-navy hover:text-navy transition">+ Add Reagent</button>
             </div>
 
             <div class="flex flex-col md:flex-row gap-3 no-print">
@@ -260,6 +267,7 @@
 </body>
 
 </html>
+
 
 
 
