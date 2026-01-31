@@ -154,15 +154,13 @@
                 </div>
             `;
         }
-
-      // --- الجزء اللي هتستبدله بآخر جزء في ملفك (من أول دالة renderEditor لغاية الآخر) ---
-
-function renderEditor() {
+ function renderEditor() {
     const p = state.editingProtocol;
     const mMixTotal = p.reagents.reduce((s, r) => s + (parseFloat(r.perSample) || 0), 0);
 
     document.getElementById('main-content').innerHTML = `
         <div class="max-w-4xl mx-auto space-y-6 pb-20 px-2">
+            
             <div class="glass-card rounded-xl p-4 border-none shadow-sm bg-white">
                 <input type="text" value="${p.title}" class="text-xl font-black text-navy w-full border-none focus:ring-0 mb-1 p-0 bg-transparent" onchange="state.editingProtocol.title = this.value">
                 <textarea class="text-gray-500 w-full border-none focus:ring-0 p-0 text-xs italic bg-transparent resize-none h-10" onchange="state.editingProtocol.description = this.value">${p.description}</textarea>
@@ -209,8 +207,8 @@ function renderEditor() {
                         `).join('')}
                         <tr class="bg-[#30486D] text-white">
                             <td class="py-3 px-3 font-bold text-[10px] uppercase">Master Mix Total</td>
-                            <td class="py-3 px-1 text-center font-black text-sm border-l border-white/10">${mMixTotal.toFixed(2)}</td>
-                            <td class="py-3 px-1 text-center font-black text-sm bg-[#4C74A9] border-l border-white/10">${(mMixTotal * p.numSamples).toFixed(2)}</td>
+                            <td class="py-3 px-1 text-center font-black text-sm">${mMixTotal.toFixed(2)}</td>
+                            <td class="py-3 px-1 text-center font-black text-sm bg-[#4C74A9]">${(mMixTotal * p.numSamples).toFixed(2)}</td>
                             <td></td>
                         </tr>
                     </tbody>
@@ -218,127 +216,54 @@ function renderEditor() {
                 <button onclick="state.editingProtocol.reagents.push({name: 'New Reagent', perSample: 0}); render();" class="w-full py-3 text-xs font-bold text-gray-400 border-t border-dashed border-gray-200 hover:bg-gray-50">+ Add Reagent</button>
             </div>
 
-            <div class="bg-white rounded-xl shadow-md border border-gray-100 p-4 text-xs">
-                 <h3 class="text-sm font-black text-navy uppercase mb-4">Thermal Profile</h3>
-                 <div class="space-y-2">
+            <div class="bg-white rounded-xl shadow-md border border-gray-100 p-4">
+                <h3 class="text-sm font-black text-navy uppercase tracking-widest mb-4">Thermal Profile</h3>
+                
+                <div class="flex px-2 mb-2 text-[9px] font-bold text-gray-400 uppercase tracking-tighter">
+                    <div class="flex-grow">Step</div>
+                    <div class="w-14 text-center">Temp</div>
+                    <div class="w-14 text-center">Time</div>
+                    <div class="w-12 text-center">Cycles</div>
+                    <div class="w-6"></div>
+                </div>
+
+                <div class="space-y-2">
                     ${p.thermalSteps.map((s, i) => `
-                        <div class="flex items-center gap-2 bg-[#F8FAFC] p-2 rounded-lg border border-gray-100 font-bold">
-                            <input type="text" value="${s.name}" class="flex-grow bg-transparent border-none p-0 text-navy text-xs" onchange="state.editingProtocol.thermalSteps[${i}].name = this.value">
-                            <input type="number" value="${s.temp}" class="w-10 bg-white border border-gray-100 rounded text-center" onchange="state.editingProtocol.thermalSteps[${i}].temp = parseInt(this.value); render();">
-                            <span class="text-gray-400">°C</span>
-                            <input type="text" value="${s.duration}" class="w-10 bg-white border border-gray-100 rounded text-center italic" onchange="state.editingProtocol.thermalSteps[${i}].duration = this.value; render();">
-                            <input type="number" value="${s.cycles}" class="w-8 bg-white border border-gray-100 rounded text-center" onchange="state.editingProtocol.thermalSteps[${i}].cycles = parseInt(this.value); render();">
-                            <button onclick="state.editingProtocol.thermalSteps.splice(${i},1); render();" class="text-red-300">✕</button>
+                        <div class="flex items-center gap-2 bg-[#F8FAFC] p-3 rounded-xl border border-gray-100">
+                            <div class="flex-grow">
+                                <input type="text" value="${s.name}" class="w-full bg-transparent border-none p-0 font-bold text-navy text-xs focus:ring-0" onchange="state.editingProtocol.thermalSteps[${i}].name = this.value">
+                            </div>
+                            <input type="number" value="${s.temp}" class="w-12 bg-white border border-gray-200 rounded py-1 text-center font-bold text-xs" onchange="state.editingProtocol.thermalSteps[${i}].temp = parseInt(this.value); render();">
+                            <input type="text" value="${s.duration}" class="w-12 bg-white border border-gray-200 rounded py-1 text-center font-bold text-xs italic" onchange="state.editingProtocol.thermalSteps[${i}].duration = this.value; render();">
+                            <input type="number" value="${s.cycles}" class="w-10 bg-white border border-gray-200 rounded py-1 text-center font-bold text-xs" onchange="state.editingProtocol.thermalSteps[${i}].cycles = parseInt(this.value); render();">
+                            <button onclick="state.editingProtocol.thermalSteps.splice(${i},1); render();" class="w-6 text-red-300">✕</button>
                         </div>
                     `).join('')}
-                 </div>
-                 <button onclick="state.editingProtocol.thermalSteps.push({name: 'New Step', temp: 95, duration: '30s', cycles: 1}); render();" class="w-full mt-2 text-gray-400 font-bold">+ Add Step</button>
+                </div>
+                
+                <button onclick="state.editingProtocol.thermalSteps.push({name: 'New Step', temp: 95, duration: '30s', cycles: 1}); render();" 
+                class="mt-3 w-full border-2 border-dashed border-gray-100 py-3 rounded-xl text-gray-400 text-[10px] font-bold uppercase tracking-widest">+ Add Thermal Step</button>
             </div>
 
             <div class="grid grid-cols-2 gap-2 pt-2">
-                <button onclick="saveChanges()" class="bg-navy text-white py-4 rounded-xl font-black text-sm">Save Protocol</button>
+                <button onclick="saveChanges()" class="bg-navy text-white py-4 rounded-xl font-black text-sm shadow-lg active:scale-95 transition">Save Protocol</button>
                 <button onclick="showPage('dashboard')" class="bg-white text-gray-400 border border-gray-200 py-4 rounded-xl font-bold text-sm">Cancel</button>
             </div>
         </div>
     `;
 }
 
-// --- ميزة الـ PDF و Smart Import ---
+        function render() {
+            if (state.currentPage === 'dashboard') renderDashboard();
+            else if (state.currentPage === 'editor') renderEditor();
+            else if (state.currentPage === 'import') renderImport();
+        }
 
-function renderImport() {
-    document.getElementById('main-content').innerHTML = `
-        <div class="max-w-xl mx-auto mt-6 px-4 pb-20">
-            <div class="glass-card rounded-3xl p-6 bg-white shadow-sm border border-gray-100 text-center">
-                <h2 class="text-2xl font-black text-navy mb-6">Smart AI Import ✨</h2>
-                
-                <div class="border-2 border-dashed border-blue-100 rounded-2xl p-8 bg-blue-50/30 mb-6 relative hover:bg-blue-50 transition-all cursor-pointer">
-                    <input type="file" id="pdf-file" accept=".pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileUpload(event)">
-                    <div class="flex flex-col items-center">
-                        <div class="bg-scientific w-12 h-12 rounded-full flex items-center justify-center mb-3 text-white shadow-md">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                        </div>
-                        <span class="text-navy font-bold text-sm">Upload Protocol PDF</span>
-                        <span id="file-status" class="text-[9px] text-blue-400 mt-2 font-bold uppercase tracking-widest italic">Ready for file</span>
-                    </div>
-                </div>
+        window.onload = () => { loadFromLocal(); render(); };
+    </script>
+</body>
 
-                <div class="relative flex items-center mb-6 text-gray-300 font-bold text-[10px]">
-                    <div class="flex-grow border-t border-gray-100"></div><span class="px-3">OR PASTE TEXT</span><div class="flex-grow border-t border-gray-100"></div>
-                </div>
-
-                <textarea id="import-text" class="w-full h-40 bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm mb-4 resize-none" placeholder="Paste protocol steps here..."></textarea>
-                
-                <button onclick="runSmartImport()" id="ai-btn" class="w-full bg-navy text-white py-4 rounded-2xl font-black shadow-lg">
-                    ${state.isAILoading ? '⏳ Extracting Data...' : 'Start AI Extraction ✨'}
-                </button>
-            </div>
-        </div>
-    `;
-}
-
-async function handleFileUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const statusLabel = document.getElementById('file-status');
-    statusLabel.innerText = "⏳ Extracting Text from PDF...";
-    
-    const pdfjsLib = window['pdfjs-dist/build/pdf'];
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-
-    const reader = new FileReader();
-    reader.onload = async function() {
-        try {
-            const typedarray = new Uint8Array(this.result);
-            const pdf = await pdfjsLib.getDocument(typedarray).promise;
-            let fullText = "";
-            for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const content = await page.getTextContent();
-                fullText += content.items.map(item => item.str).join(" ");
-            }
-            document.getElementById('import-text').value = fullText;
-            statusLabel.innerText = "✅ PDF Data Loaded!";
-        } catch (err) { statusLabel.innerText = "❌ PDF Reading Error"; }
-    };
-    reader.readAsArrayBuffer(file);
-}
-
-async function runSmartImport() {
-    const text = document.getElementById('import-text').value;
-    if (!text || text.length < 10) return alert("Please enter more protocol text.");
-    
-    state.isAILoading = true;
-    render();
-
-    const prompt = `Convert this lab protocol into a JSON object. 
-    Include: title, description, numSamples (default 1), sampleVolume (default 2), 
-    reagents (array of objects with: name, perSample), 
-    thermalSteps (array of objects with: name, temp, duration, cycles).
-    
-    TEXT TO CONVERT: ${text}`;
-
-    const protocolData = await callGemini(prompt, true);
-    state.isAILoading = false;
-
-    if (protocolData) {
-        protocolData.id = 'p' + Date.now();
-        protocolData.updated = new Date().toISOString().split('T')[0];
-        state.protocols.push(protocolData);
-        saveToLocal();
-        editProtocol(protocolData.id);
-    } else {
-        alert("AI could not extract data. Check your API Key or try pasting manual text.");
-        render();
-    }
-}
-
-function render() {
-    if (state.currentPage === 'dashboard') renderDashboard();
-    else if (state.currentPage === 'editor') renderEditor();
-    else if (state.currentPage === 'import') renderImport();
-}
-
-window.onload = () => { loadFromLocal(); render(); };
+</html>
 
 
 
