@@ -278,7 +278,7 @@
     document.getElementById('main-content').innerHTML = `
         <div class="max-w-xl mx-auto mt-6 px-4 pb-20">
             <div class="glass-card rounded-3xl p-6 bg-white shadow-sm border border-gray-100">
-                <h2 class="text-2xl font-black text-navy mb-2 text-center">Smart AI Import ✨</h2>
+                <h2 class="text-2xl font-black text-navy mb-2 text-center">Smart AI Import </h2>
                 <p class="text-[10px] text-gray-400 text-center mb-6 uppercase tracking-widest font-bold">PDF or Manual Text</p>
                 
                 <div class="border-2 border-dashed border-blue-100 rounded-2xl p-8 text-center bg-blue-50/30 mb-6 hover:bg-blue-50 transition-all relative group">
@@ -302,13 +302,89 @@
                 <textarea id="import-text" class="w-full h-40 bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm focus:ring-navy focus:border-navy mb-4 resize-none" placeholder="Paste protocol steps here..."></textarea>
                 
                 <button onclick="runSmartImport()" id="ai-btn" class="w-full bg-navy text-white py-4 rounded-2xl font-black shadow-lg active:scale-95 transition-all flex justify-center items-center">
-                    ${state.isAILoading ? '<span class="animate-spin mr-2">⏳</span> Processing...' : 'Start AI Extraction ✨'}
+                    ${state.isAILoading ? '<span class="animate-spin mr-2">⏳</span> Processing...' : 'Start AI Import ✨'}
                 </button>
             </div>
         </div>
     `;
 }
 
+async function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const statusLabel = document.getElementById('file-status');
+    statusLabel.innerText = "⏳ Reading PDF contents...";
+
+    // تهيئة مكتبة PDF.js اللي ضيفناها في الـ Head فوق
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+    const reader = new FileReader();
+    reader.onload = async function() {
+        try {
+            const typedarray = new Uint8Array(this.result);
+            const pdf = await pdfjsLib.getDocument(typedarray).promise;
+            let fullText = "";
+
+            // اللف على صفحات الملف صفحة صفحة لسحب النص
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                fullText += content.items.map(item => item.str).join(" ") + "\n";
+            }
+
+            // وضع النص المستخرج داخل مربع النص
+            document.getElementById('import-text').value = fullText;
+            statusLabel.innerText = "✅ PDF Extracted! Click Start AI.";
+        } catch (err) {
+            statusLabel.innerText = "❌ Error: Could not read PDF";
+            console.error(err);
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+        async function runSmartImport() {
+    const text = document.getElementById('import-text').value;
+    if (!text || text.length < 20) return alert("Please provide more protocol details.");
+    
+    state.isAILoading = true; // تشغيل علامة التحميل (Spinning icon)
+    render();
+
+    // "البرومبت" أو الأمر اللي بنبعته للـ AI عشان يفهم طبيعة شغلنا
+    const prompt = `Convert this laboratory protocol text into a JSON object. 
+    Strictly use this format: {
+        "title": "Protocol Name",
+        "description": "Short summary",
+        "numSamples": 1,
+        "sampleVolume": 2.0,
+        "reagents": [{"name": "reagent name", "perSample": 1.5}],
+        "thermalSteps": [{"name": "step name", "temp": 95, "duration": "30s", "cycles": 40}]
+    }
+    TEXT: ${text}`;
+
+    try {
+        const result = await callGemini(prompt, true); // بننادي الركيزة الأولى
+        state.isAILoading = false;
+
+        if (result) {
+            // إضافة البيانات الجديدة لقائمة البروتوكولات عندك
+            result.id = 'p' + Date.now();
+            result.updated = new Date().toISOString().split('T')[0];
+            state.protocols.push(result);
+            
+            saveToLocal(); // حفظ في ذاكرة المتصفح
+            editProtocol(result.id); // فتح البروتوكول فوراً للتعديل
+        } else {
+            render();
+        }
+    } catch (e) {
+        state.isAILoading = false;
+        render();
+        alert("AI could not format this protocol. Try a clearer text.");
+    }
+}
+        
         function render() {
             if (state.currentPage === 'dashboard') renderDashboard();
             else if (state.currentPage === 'editor') renderEditor();
@@ -320,6 +396,7 @@
 </body>
 
 </html>
+
 
 
 
