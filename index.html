@@ -80,37 +80,33 @@ const apiKey = window.process?.env?.GEMINI_API_KEY || "";
         };
 
         async function callGemini(prompt, isJson = false) {
-    // التنسيق ده هو اللي جوجل مستنياه
     const payload = { 
-        contents: [{ 
-            parts: [{ text: prompt }] 
-        }] 
+        contents: [{ parts: [{ text: prompt }] }] 
     };
-    
-    // لو محتاجين الرد بصيغة JSON بنضيف الإعداد ده
-    if (isJson) {
-        payload.generationConfig = { responseMimeType: "application/json" };
-    }
+    if (isJson) payload.generationConfig = { responseMimeType: "application/json" };
     
     try {
         const response = await fetch('/api/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload) // بنبعت الـ payload اللي فوق
+            body: JSON.stringify(payload)
         });
 
         const result = await response.json();
         
-        // تأكد من طريقة قراءة الرد من جوجل
         if (result.candidates && result.candidates[0].content) {
-            const text = result.candidates[0].content.parts[0].text;
-            return isJson ? JSON.parse(text) : text;
-        } else {
-            console.error("Unexpected API Response:", result);
-            throw new Error("AI could not understand the request");
+            let text = result.candidates[0].content.parts[0].text;
+            
+            if (isJson) {
+                // تنظيف النص من علامات ```json التي يضيفها الذكاء الاصطناعي أحياناً
+                text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+                return JSON.parse(text);
+            }
+            return text;
         }
+        throw new Error("Empty response from AI");
     } catch (error) {
-        console.error("AI Error:", error);
+        console.error("Detailed AI Error:", error);
         return null;
     }
 }
@@ -349,43 +345,38 @@ async function handleFileUpload(event) {
     reader.readAsArrayBuffer(file);
 }
         async function runSmartImport() {
-    const text = document.getElementById('import-text').value;
-    if (!text || text.length < 20) return alert("Please provide more protocol details.");
-    
-    state.isAILoading = true; // تشغيل علامة التحميل (Spinning icon)
-    render();
+    const text = document.getElementById('importText').value;
+    if (!text) return alert("Please provide some text or a file.");
 
-    // "البرومبت" أو الأمر اللي بنبعته للـ AI عشان يفهم طبيعة شغلنا
-    const prompt = `Convert this laboratory protocol text into a JSON object. 
-    Strictly use this format: {
-        "title": "Protocol Name",
-        "description": "Short summary",
-        "numSamples": 1,
-        "sampleVolume": 2.0,
-        "reagents": [{"name": "reagent name", "perSample": 1.5}],
-        "thermalSteps": [{"name": "step name", "temp": 95, "duration": "30s", "cycles": 40}]
-    }
-    TEXT: ${text}`;
+    state.isAILoading = true;
+    renderApp();
 
-    try {
-        const result = await callGemini(prompt, true); // بننادي الركيزة الأولى
+    const prompt = `Extract chemical protocols from this text. 
+    Return ONLY a JSON array of objects with these keys: 
+    "name", "description", "ingredients" (as array of strings), "steps" (as array of strings).
+    Text: ${text}`;
+
+    const importedProtocols = await callGemini(prompt, true);
+
+    if (importedProtocols && Array.isArray(importedProtocols)) {
+        // إضافة معرف فريد (ID) وتاريخ لكل بروتوكول جديد
+        const formattedProtocols = importedProtocols.map(p => ({
+            ...p,
+            id: Date.now() + Math.random(),
+            date: new Date().toISOString().split('T')[0],
+            ingredients: Array.isArray(p.ingredients) ? p.ingredients : [],
+            steps: Array.isArray(p.steps) ? p.steps : []
+        }));
+
+        state.protocols = [...state.protocols, ...formattedProtocols];
+        saveToLocalStorage(); // حفظ البيانات في متصفحك
         state.isAILoading = false;
-
-        if (result) {
-            // إضافة البيانات الجديدة لقائمة البروتوكولات عندك
-            result.id = 'p' + Date.now();
-            result.updated = new Date().toISOString().split('T')[0];
-            state.protocols.push(result);
-            
-            saveToLocal(); // حفظ في ذاكرة المتصفح
-            editProtocol(result.id); // فتح البروتوكول فوراً للتعديل
-        } else {
-            render();
-        }
-    } catch (e) {
+        alert(`Successfully imported ${formattedProtocols.length} protocols!`);
+        showPage('dashboard'); // العودة للرئيسية لرؤية النتائج
+    } else {
         state.isAILoading = false;
-        render();
-        alert("AI could not format this protocol. Try a clearer text.");
+        renderApp();
+        alert("AI could not extract structured protocols. Try clearer text.");
     }
 }
         
@@ -400,6 +391,7 @@ async function handleFileUpload(event) {
 </body>
 
 </html>
+
 
 
 
