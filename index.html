@@ -267,57 +267,39 @@ const apiKey = window.process?.env?.GEMINI_API_KEY || "";
         </div>
     `;
 }
-       async function runSmartImport() {
-    const text = document.getElementById('import-text').value;
-    if (!text || text.length < 20) return alert("Please provide more protocol details.");
-    
-    state.isAILoading = true;
-    render();
+       function renderImport() {
+    document.getElementById('main-content').innerHTML = `
+        <div class="max-w-xl mx-auto mt-6 px-4 pb-20">
+            <div class="glass-card rounded-3xl p-6 bg-white shadow-sm border border-gray-100">
+                <h2 class="text-2xl font-black text-navy mb-2 text-center">Smart AI Import </h2>
+                <p class="text-[10px] text-gray-400 text-center mb-6 uppercase tracking-widest font-bold">PDF or Manual Text</p>
+                
+                <div class="border-2 border-dashed border-blue-100 rounded-2xl p-8 text-center bg-blue-50/30 mb-6 hover:bg-blue-50 transition-all relative group">
+                    <input type="file" id="pdf-file" accept=".pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="handleFileUpload(event)">
+                    
+                    <div class="flex flex-col items-center">
+                        <div class="bg-scientific w-12 h-12 rounded-full flex items-center justify-center mb-3 text-white shadow-md">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        </div>
+                        <span class="text-navy font-bold text-sm">Upload Protocol PDF</span>
+                        <span class="text-[9px] text-blue-400 mt-2 font-bold uppercase tracking-widest italic" id="file-status">Ready to extract</span>
+                    </div>
+                </div>
 
-    const prompt = `Convert this laboratory protocol text into a JSON object. 
-    Strictly use this format: {
-        "title": "Protocol Name",
-        "description": "Short summary",
-        "numSamples": 1,
-        "sampleVolume": 2.0,
-        "reagents": [{"name": "reagent name", "perSample": 1.5}],
-        "thermalSteps": [{"name": "step name", "temp": 95, "duration": "30s", "cycles": 40}]
-    }
-    Return ONLY the JSON. TEXT: ${text}`;
+                <div class="relative flex items-center mb-6">
+                    <div class="flex-grow border-t border-gray-100"></div>
+                    <span class="px-3 text-[10px] font-bold text-gray-300">OR PASTE</span>
+                    <div class="flex-grow border-t border-gray-100"></div>
+                </div>
 
-    try {
-        const result = await callGemini(prompt, true); 
-        state.isAILoading = false;
-
-        if (result) {
-            // 1. إنشاء المعرف والبيانات الأساسية
-            const newProtocol = {
-                ...result,
-                id: 'p' + Date.now(),
-                updated: new Date().toISOString().split('T')[0],
-                numSamples: result.numSamples || 1,
-                sampleVolume: result.sampleVolume || 2.0,
-                reagents: result.reagents || [],
-                thermalSteps: result.thermalSteps || []
-            };
-
-            // 2. الإضافة للحالة (State)
-            state.protocols.push(newProtocol);
-            
-            // 3. الحفظ في الذاكرة
-            saveToLocal(); 
-
-            // 4. الانتقال الفوري لصفحة التعديل
-            editProtocol(newProtocol.id); 
-        } else {
-            throw new Error("AI returned empty result");
-        }
-    } catch (e) {
-        state.isAILoading = false;
-        render();
-        console.error("Import Error:", e);
-        alert("⚠️ Error: AI could not format this protocol. Please check your API key or connection.");
-    }
+                <textarea id="import-text" class="w-full h-40 bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm focus:ring-navy focus:border-navy mb-4 resize-none" placeholder="Paste protocol steps here..."></textarea>
+                
+                <button onclick="runSmartImport()" id="ai-btn" class="w-full bg-navy text-white py-4 rounded-2xl font-black shadow-lg active:scale-95 transition-all flex justify-center items-center">
+                    ${state.isAILoading ? '<span class="animate-spin mr-2">⏳</span> Processing...' : 'Start AI Import ✨'}
+                </button>
+            </div>
+        </div>
+    `;
 }
 
 async function handleFileUpload(event) {
@@ -407,6 +389,7 @@ async function handleFileUpload(event) {
 </body>
 
 </html>
+
 
 
 
