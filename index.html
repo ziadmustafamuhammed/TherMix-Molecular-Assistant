@@ -87,24 +87,21 @@ async function callGemini(prompt, isJson = false) {
             body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
 
-        // تحويل الرد لـ JSON
         const data = await response.json();
+        
+        // إذا كان هناك خطأ من جوجل
+        if (data.error) throw new Error(data.error.message);
 
-        // لو السيرفر بعت خطأ (زي الـ 500 اللي حصلت)
-        if (!response.ok) {
-            throw new Error(data.error || "Server Error");
-        }
-
+        // استخراج النص وتطهيره
         let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!rawText) throw new Error("AI returned empty response");
+        if (!rawText) return null;
 
         rawText = rawText.replace(/```json/ig, "").replace(/```/g, "").trim();
-        return isJson ? JSON.parse(rawText) : rawText;
 
+        return isJson ? JSON.parse(rawText) : rawText;
     } catch (error) {
-        console.error("Final Debug Error:", error);
-        alert("⚠️ Error: " + error.message);
-        return null;
+        console.error("AI Fetch Error:", error);
+        throw error;
     }
 }
 
@@ -343,34 +340,43 @@ async function handleFileUpload(event) {
 }
         async function runSmartImport() {
     const text = document.getElementById('import-text').value;
-    if (!text || text.length < 20) return alert("Please provide more protocol details.");
-    
-    state.isAILoading = true; // تشغيل علامة التحميل (Spinning icon)
+    if (!text || text.length < 10) return alert("Please paste some protocol text first.");
+
+    state.isAILoading = true;
     render();
 
-    const prompt = `Return ONLY a raw JSON object for this protocol. No markdown, no backticks, no explanations.
-Format: {"title":"...","reagents":[],"thermalSteps":[]} 
-Text: ${text}`;
+    const prompt = `Task: Extract laboratory protocol data from the provided text into a clean JSON format.
+    Text to process: ${text}
+
+    Return ONLY a JSON object with this exact structure:
+    {
+        "title": "Protocol Name",
+        "description": "Short summary",
+        "numSamples": 1,
+        "sampleVolume": 2.0,
+        "reagents": [{"name": "Reagent A", "perSample": 10.5}],
+        "thermalSteps": [{"name": "Step Name", "temp": 95, "duration": "30s", "cycles": 1}]
+    }`;
 
     try {
-        const result = await callGemini(prompt, true); // بننادي الركيزة الأولى
-        state.isAILoading = false;
+        const result = await callGemini(prompt, true);
+        if (!result) throw new Error("AI returned empty response");
 
-        if (result) {
-            // إضافة البيانات الجديدة لقائمة البروتوكولات عندك
-            result.id = 'p' + Date.now();
-            result.updated = new Date().toISOString().split('T')[0];
-            state.protocols.push(result);
-            
-            saveToLocal(); // حفظ في ذاكرة المتصفح
-            editProtocol(result.id); // فتح البروتوكول فوراً للتعديل
-        } else {
-            render();
-        }
+        // إضافة القيم الناقصة للتأكد من عدم حدوث Error في الـ Render
+        result.id = 'p' + Date.now();
+        result.updated = new Date().toISOString().split('T')[0];
+        result.reagents = result.reagents || [];
+        result.thermalSteps = result.thermalSteps || [];
+
+        state.protocols.push(result);
+        saveToLocal();
+        state.isAILoading = false;
+        editProtocol(result.id); 
     } catch (e) {
         state.isAILoading = false;
         render();
-        alert("AI could not format this protocol. Try a clearer text.");
+        console.error("Import Error:", e);
+        alert("⚠️ Import Failed: " + e.message);
     }
 }
         
@@ -385,6 +391,7 @@ Text: ${text}`;
 </body>
 
 </html>
+
 
 
 
