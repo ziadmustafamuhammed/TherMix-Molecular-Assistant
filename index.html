@@ -84,27 +84,26 @@ async function callGemini(prompt, isJson = false) {
         const response = await fetch('/api/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
-            })
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
 
+        // تحويل الرد لـ JSON
         const data = await response.json();
 
-        if (data.error) {
-            throw new Error(data.error.message);
+        // لو السيرفر بعت خطأ (زي الـ 500 اللي حصلت)
+        if (!response.ok) {
+            throw new Error(data.error || "Server Error");
         }
 
         let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!rawText) throw new Error("No data received from AI");
+        if (!rawText) throw new Error("AI returned empty response");
 
-        // تنظيف شامل للنص من أي علامات Markdown
         rawText = rawText.replace(/```json/ig, "").replace(/```/g, "").trim();
-
         return isJson ? JSON.parse(rawText) : rawText;
+
     } catch (error) {
         console.error("Final Debug Error:", error);
-        alert("⚠️ AI Notification: " + error.message);
+        alert("⚠️ Error: " + error.message);
         return null;
     }
 }
@@ -386,6 +385,7 @@ Text: ${text}`;
 </body>
 
 </html>
+
 
 
 
