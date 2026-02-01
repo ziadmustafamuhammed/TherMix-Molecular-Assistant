@@ -1,12 +1,10 @@
 {
   "name": "thermix-molecular-assistant",
   "version": "1.0.0",
-  "description": "API backend for Gemini AI Integration",
-  "main": "api/generate.js",
   "dependencies": {
     "@google/generative-ai": "^0.21.0"
   },
   "engines": {
-    "node": "24.x"
+    "node": ">=24.x"
   }
 }
