@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TherMix </title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://<link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -88,23 +88,26 @@ const apiKey = window.process?.env?.GEMINI_API_KEY || "";
         });
 
         const data = await response.json();
-        // استخراج النص وتطهيره يدوياً بعيداً عن أي Function/eval
+        console.log("Full AI Response:", data); // ده هيطبع الرد كامل في الـ Console عشان نشوف جوجل بتقول إيه
+
+        // التأكد من أن الرد يحتوي على بيانات فعلاً
+        if (!data.candidates || data.candidates.length === 0) {
+            if (data.error) {
+                throw new Error("AI Error: " + data.error.message);
+            }
+            throw new Error("AI returned empty candidates. Check API Key or safety filters.");
+        }
+
         let rawText = data.candidates[0].content.parts[0].text.trim();
-        
-        // إزالة أي زوائد Markdown لو الـ AI غلبنا وحطها
         rawText = rawText.replace(/^```json/i, "").replace(/```$/i, "").trim();
 
         if (isJson) {
-            try {
-                return JSON.parse(rawText);
-            } catch (parseError) {
-                console.error("JSON Parsing failed:", rawText);
-                return null;
-            }
+            return JSON.parse(rawText);
         }
         return rawText;
     } catch (error) {
-        console.error("Fetch error:", error);
+        console.error("Fetch error details:", error);
+        alert("⚠️ Connection Issue: " + error.message);
         return null;
     }
 }
@@ -386,6 +389,7 @@ Text: ${text}`;
 </body>
 
 </html>
+
 
 
 
