@@ -8,15 +8,23 @@ export default async function handler(req, res) {
 
     try {
         const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        
+        const model = genAI.getGenerativeModel(
+            { model: "gemini-1.5-flash" },
+            { apiVersion: 'v1' } 
+        );
 
         const prompt = req.body.contents[0].parts[0].text;
         
-        const result = await model.generateContent(prompt);
+        const result = await model.generateContent({
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            safetySettings: [
+                { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+            ],
+        });
+
         const response = await result.response;
         const text = response.text();
-
-        if (!text) throw new Error("AI returned empty text");
 
         res.status(200).json({
             candidates: [{ content: { parts: [{ text: text }] } }]
