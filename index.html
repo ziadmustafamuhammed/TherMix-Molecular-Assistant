@@ -79,31 +79,24 @@ const apiKey = window.process?.env?.GEMINI_API_KEY || "";
             editingProtocol: null
         };
 
-async function callGemini(prompt, isJson = false) {
+async function callGemini(prompt) {
     try {
-        const response = await fetch('/api/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        const response = await fetch("/api/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt })
         });
 
         const data = await response.json();
-        
-        // إذا كان هناك خطأ من جوجل
-        if (data.error) throw new Error(data.error.message);
+        if (!response.ok) throw new Error(data.error || "Unknown error");
 
-        // استخراج النص وتطهيره
-        let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!rawText) return null;
-
-        rawText = rawText.replace(/```json/ig, "").replace(/```/g, "").trim();
-
-        return isJson ? JSON.parse(rawText) : rawText;
-    } catch (error) {
-        console.error("AI Fetch Error:", error);
-        throw error;
+        return JSON.parse(data.text);
+    } catch (err) {
+        console.error("AI Fetch Error:", err);
+        throw err;
     }
 }
+
 
         function showPage(page) {
             state.currentPage = page;
@@ -391,6 +384,7 @@ async function handleFileUpload(event) {
 </body>
 
 </html>
+
 
 
 
