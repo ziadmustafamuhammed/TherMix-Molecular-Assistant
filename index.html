@@ -79,29 +79,27 @@ const apiKey = window.process?.env?.GEMINI_API_KEY || "";
             editingProtocol: null
         };
 
-        async function callGemini(prompt, isJson = false) {
+     async function callGemini(prompt, isJson = false) {
     const payload = { contents: [{ parts: [{ text: prompt }] }] };
     if (isJson) payload.generationConfig = { responseMimeType: "application/json" };
     
     try {
-        // بدلاً من مناداة جوجل مباشرة، ننادي الـ API الخاص بنا في Vercel
         const response = await fetch('/api/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Server Error");
-        }
-
         const result = await response.json();
-        const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-        return isJson ? JSON.parse(text) : text;
+        let text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (isJson && text) {
+            text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+            return JSON.parse(text);
+        }
+        return text;
     } catch (error) {
         console.error("AI Error:", error);
-        alert("⚠️ AI Notification: " + error.message);
         return null;
     }
 }
@@ -391,6 +389,7 @@ async function handleFileUpload(event) {
 </body>
 
 </html>
+
 
 
 
