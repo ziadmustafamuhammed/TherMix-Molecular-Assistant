@@ -79,35 +79,32 @@ const apiKey = window.process?.env?.GEMINI_API_KEY || "";
             editingProtocol: null
         };
 
-    async function callGemini(prompt, isJson = false) {
+async function callGemini(prompt, isJson = false) {
     try {
         const response = await fetch('/api/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                contents: [{ parts: [{ text: prompt }] }] 
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
             })
         });
 
         const data = await response.json();
-        
-        // فحص لو السيرفر رجع خطأ
+
         if (data.error) {
-            throw new Error(data.error.message || "AI Error");
+            throw new Error(data.error.message);
         }
 
-        let rawText = data.candidates[0].content.parts[0].text.trim();
-        
-        // تنظيف النص من أي علامات JSON زائدة
+        let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawText) throw new Error("No data received from AI");
+
+        // تنظيف شامل للنص من أي علامات Markdown
         rawText = rawText.replace(/```json/ig, "").replace(/```/g, "").trim();
 
-        if (isJson) {
-            return JSON.parse(rawText);
-        }
-        return rawText;
+        return isJson ? JSON.parse(rawText) : rawText;
     } catch (error) {
-        console.error("Fetch error details:", error);
-        alert("⚠️ AI Issue: " + error.message);
+        console.error("Final Debug Error:", error);
+        alert("⚠️ AI Notification: " + error.message);
         return null;
     }
 }
@@ -389,6 +386,7 @@ Text: ${text}`;
 </body>
 
 </html>
+
 
 
 
