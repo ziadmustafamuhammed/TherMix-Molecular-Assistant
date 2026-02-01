@@ -84,22 +84,22 @@ const apiKey = window.process?.env?.GEMINI_API_KEY || "";
         const response = await fetch('/api/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            body: JSON.stringify({ 
+                contents: [{ parts: [{ text: prompt }] }] 
+            })
         });
 
         const data = await response.json();
-        console.log("Full AI Response:", data); // ده هيطبع الرد كامل في الـ Console عشان نشوف جوجل بتقول إيه
-
-        // التأكد من أن الرد يحتوي على بيانات فعلاً
-        if (!data.candidates || data.candidates.length === 0) {
-            if (data.error) {
-                throw new Error("AI Error: " + data.error.message);
-            }
-            throw new Error("AI returned empty candidates. Check API Key or safety filters.");
+        
+        // فحص لو السيرفر رجع خطأ
+        if (data.error) {
+            throw new Error(data.error.message || "AI Error");
         }
 
         let rawText = data.candidates[0].content.parts[0].text.trim();
-        rawText = rawText.replace(/^```json/i, "").replace(/```$/i, "").trim();
+        
+        // تنظيف النص من أي علامات JSON زائدة
+        rawText = rawText.replace(/```json/ig, "").replace(/```/g, "").trim();
 
         if (isJson) {
             return JSON.parse(rawText);
@@ -107,7 +107,7 @@ const apiKey = window.process?.env?.GEMINI_API_KEY || "";
         return rawText;
     } catch (error) {
         console.error("Fetch error details:", error);
-        alert("⚠️ Connection Issue: " + error.message);
+        alert("⚠️ AI Issue: " + error.message);
         return null;
     }
 }
@@ -389,6 +389,7 @@ Text: ${text}`;
 </body>
 
 </html>
+
 
 
 
