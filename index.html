@@ -79,24 +79,31 @@ const apiKey = window.process?.env?.GEMINI_API_KEY || "";
             editingProtocol: null
         };
 
-async function callGemini(prompt) {
+async function callGemini(prompt, isJson = false) {
     try {
-        const response = await fetch("/api/generate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt })
+        const response = await fetch('/api/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+            })
         });
 
         const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Unknown error");
+        if (!response.ok) throw new Error(data.error || "Server Error");
 
-        return JSON.parse(data.text);
-    } catch (err) {
-        console.error("AI Fetch Error:", err);
-        throw err;
+        let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawText) throw new Error("No response from AI");
+
+        rawText = rawText.replace(/```json/ig, "").replace(/```/g, "").trim();
+
+        return isJson ? JSON.parse(rawText) : rawText;
+    } catch (error) {
+        console.error("Connection Error:", error);
+        alert("⚠️ Error: " + error.message);
+        return null;
     }
 }
-
 
         function showPage(page) {
             state.currentPage = page;
@@ -384,6 +391,7 @@ async function handleFileUpload(event) {
 </body>
 
 </html>
+
 
 
 
