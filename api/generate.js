@@ -1,37 +1,31 @@
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export default async function handler(req, res) {
-    if (req.method !== 'POST') return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "POST method required" });
+  }
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: "API Key Missing" });
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: "Missing API Key" });
+  }
 
-    try {
-        const genAI = new GoogleGenerativeAI(apiKey);
-        
-        const model = genAI.getGenerativeModel(
-            { model: "gemini-1.5-flash" },
-            { apiVersion: 'v1' } 
-        );
+  try {
+    const { prompt } = req.body;
 
-        const prompt = req.body.contents[0].parts[0].text;
-        
-        const result = await model.generateContent({
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-            safetySettings: [
-                { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-            ],
-        });
+    const genAI = new GoogleGenerativeAI(apiKey);
 
-        const response = await result.response;
-        const text = response.text();
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+      apiVersion: "v1" 
+    });
 
-        res.status(200).json({
-            candidates: [{ content: { parts: [{ text: text }] } }]
-        });
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
 
-    } catch (error) {
-        console.error("DETAILED AI ERROR:", error);
-        res.status(500).json({ error: "AI Processing Failed", details: error.message });
-    }
+    return res.status(200).json({ text });
+  } catch (error) {
+    console.error("API ERROR:", error);
+    return res.status(500).json({ error: error.message });
+  }
 }
