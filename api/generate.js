@@ -1,32 +1,27 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "POST method required" });
-  }
-
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return res.status(500).json({ error: "Missing API Key" });
-  }
-
   try {
-    const { prompt } = req.body;
+    if (req.method !== "POST") {
+      return res.status(405).json({ error: "Only POST allowed" });
+    }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
+    const prompt = req.body.prompt;
+    if (!prompt) {
+      return res.status(400).json({ error: "Missing prompt" });
+    }
 
-    // 🔥 الموديل الصحيح 100%
-    const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash-latest",
-      apiVersion: "v1"
-    });
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+    // موديل Google الرسمي
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const result = await model.generateContent(prompt);
     const text = result.response.text();
 
     return res.status(200).json({ text });
   } catch (error) {
-    console.error("API ERROR:", error);
+    console.error("GEN ERROR:", error);
     return res.status(500).json({ error: error.message });
   }
 }
