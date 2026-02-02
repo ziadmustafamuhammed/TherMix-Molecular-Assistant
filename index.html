@@ -89,11 +89,9 @@ async function callGemini(prompt) {
 
         const data = await response.json();
 
-        if (data.error) {
-            throw new Error(data.error);
-        }
+        if (data.error) throw new Error(data.error);
 
-        return data.text; 
+        return data.text;
     } catch (error) {
         console.error("Connection Error:", error);
         throw error;
@@ -393,6 +391,7 @@ async function handleFileUpload(event) {
 </body>
 
 </html>
+
 
 
 
