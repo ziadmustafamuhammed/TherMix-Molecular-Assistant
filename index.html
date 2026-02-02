@@ -333,18 +333,18 @@ async function handleFileUpload(event) {
         }
     };
     reader.readAsArrayBuffer(file);
-}
-        async function runSmartImport() {
+}async function runSmartImport() {
     const text = document.getElementById('import-text').value;
     if (!text || text.length < 10) return alert("Please paste some protocol text first.");
 
     state.isAILoading = true;
     render();
 
-    const prompt = `Task: Extract laboratory protocol data from the provided text into a clean JSON format.
+    const prompt = `
+    Task: Extract laboratory protocol data from the provided text into a clean JSON format.
     Text to process: ${text}
 
-    Return ONLY a JSON object with this exact structure:
+    Return ONLY this JSON structure:
     {
         "title": "Protocol Name",
         "description": "Short summary",
@@ -352,13 +352,17 @@ async function handleFileUpload(event) {
         "sampleVolume": 2.0,
         "reagents": [{"name": "Reagent A", "perSample": 10.5}],
         "thermalSteps": [{"name": "Step Name", "temp": 95, "duration": "30s", "cycles": 1}]
-    }`;
+    }
+    `;
 
     try {
-        const result = await callGemini(prompt, true);
-        if (!result) throw new Error("AI returned empty response");
+        // 🔥 callGemini() now returns just plain text
+        const aiText = await callGemini(prompt);
 
-        // إضافة القيم الناقصة للتأكد من عدم حدوث Error في الـ Render
+        // 🔥 Convert returned AI text into JSON object
+        const result = JSON.parse(aiText);
+
+        // Ensure required fields exist
         result.id = 'p' + Date.now();
         result.updated = new Date().toISOString().split('T')[0];
         result.reagents = result.reagents || [];
@@ -366,8 +370,10 @@ async function handleFileUpload(event) {
 
         state.protocols.push(result);
         saveToLocal();
+
         state.isAILoading = false;
-        editProtocol(result.id); 
+        editProtocol(result.id);
+
     } catch (e) {
         state.isAILoading = false;
         render();
@@ -387,6 +393,7 @@ async function handleFileUpload(event) {
 </body>
 
 </html>
+
 
 
 
